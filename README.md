@@ -10,3 +10,9 @@ Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma pi√
 *Note generali sul C/C++* : https://www.cplusplus.com/
 
 *GSL-GNU Scientific Library* : https://www.gnu.org/software/gsl/
+
+*GNU Manuals Online* : https://www.gnu.org/manual/manual.html
+
+*Fast Fourier Transform* : https://www.gnu.org/software/gsl/doc/html/fft.html
+
+*Random Numbers Generator* : https://www.gnu.org/software/gsl/doc/html/rng.html?highlight=random
