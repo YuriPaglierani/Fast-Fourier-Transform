@@ -5,7 +5,8 @@ Dobbiamo poi decidere come procedere, i punti fondamentali che secondo me bisogn
 
 Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma più facile).
 
-#Indirizzi utili
+# Indirizzi utili
+
 *Note generali sul C/C++* : https://www.cplusplus.com/
 
 *GSL-GNU Scientific Library* : https://www.gnu.org/software/gsl/
