@@ -16,3 +16,5 @@ Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma pi√
 *Fast Fourier Transform* : https://www.gnu.org/software/gsl/doc/html/fft.html
 
 *Random Numbers Generator* : https://www.gnu.org/software/gsl/doc/html/rng.html?highlight=random
+
+*Libro Introduction To C Language E-Book* : https://web.telegram.org/
