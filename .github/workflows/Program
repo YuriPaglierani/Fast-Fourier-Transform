@@ -1,4 +1,22 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <malloc.h>
+#define T0 0
+#define TF 1.0
+#define DIM 1024.0
+typedef float vartype;
+vartype signal(vartype t){
+	return sin(2*M_PI*t);
+}
 int main(){
-	printf("Il programma lo salviamo qui volta per volta, ogni tanto invece che sovrascrivere il master conviene creare delle branche in modo da tenere dei 'backup' del programma");
+	vartype *sample,dt,t;
+	int i;
+	dt=(TF-T0)/DIM;
+	sample=(vartype*)malloc(DIM*sizeof(vartype));
+	for(i=0;i<DIM;i++){
+		t=i*dt;
+		sample[i]=signal(t);
+	}
+	return 0;
 }
