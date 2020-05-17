@@ -1,4 +1,4 @@
 #include <stdio.h>
 int main(){
-	printf("hello World");
+	printf("Il programma lo salviamo qui volta per volta, ogni tanto invece che sovrascrivere il master conviene creare delle branche in modo da tenere dei 'backup' del programma");
 }
