@@ -1,9 +1,12 @@
 # Fast-Fourier-Transform
 Prima di iniziare a programmare leggi velocemente la guida di Github sulle repository, in questo modo miglioreremo l'amministrazione del lavoro.
 
+(Non ci ho capito molto quindi provo un po' a fare cose così imparo CV)
+
 Dobbiamo poi decidere come procedere, i punti fondamentali che secondo me bisogna tenere in considerazione sono: leggere il libro del C, capire quali librerie utilizzare, capire esattamente come funziona l'algoritmo di FFT nei suoi vari punti e infine dividere il lavoro tra generazione del segnale in input (segnale pulito + rumore gaussiano) e algoritmo di FFT.
 
 Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma più facile).
+
 
 # Indirizzi utili
 
