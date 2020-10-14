@@ -37,7 +37,7 @@ int main (void){
   	int i,DIM;
   	floable dt=0.01,t,*AmpTime,MyInput(floable);
   	void SIGNAL(floable*,int);
-  	gsl_rng *r;					/*, unsigned long int s*/	/*definisco il seed. se non c'è s allora il seed è di default*/
+  	gsl_rng *r;					/*definisco il seed*/
   	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
   	T = gsl_rng_default;				/*uso il default seed*/	
   	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
@@ -50,7 +50,7 @@ int main (void){
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */
-							/* double v = gsl_ran_gaussian (r,a);	uso il generatore di random gaussiano doppia precisione, con errore a */  
+							  
 		printf ("Gaussian %f	Signal %f	Signal+Noise %f \n",v,AmpTime[i],AmpTime[i]+v);
 		fprintf(AMPINTIME, " %.5f %.5f\n",t,AmpTime[i]+v); 	/*Segnale, Sin, Errore*/
 	}	
