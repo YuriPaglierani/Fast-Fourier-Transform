@@ -1,22 +1,57 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include <malloc.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 #define T0 0
-#define TF 1.0
-#define DIM 1024.0
-typedef float vartype;
-vartype signal(vartype t){
-	return sin(2*M_PI*t);
-}
-int main(){
-	vartype *sample,dt,t;
+typedef double floable;				/*A cute name for a float-double choice*/
+
+void SIGNAL(floable *AmpTime,int dim){		/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
 	int i;
-	dt=(TF-T0)/DIM;
-	sample=(vartype*)malloc(DIM*sizeof(vartype));
-	for(i=0;i<DIM;i++){
-		t=i*dt;
-		sample[i]=signal(t);
+	for (i=0;i<dim;i++){
+		AmpTime[i]=10*sin(2*M_PI*i*0.01);
 	}
+}
+
+floable MyInput(floable a){				/*Questa funzione la potremo usare per controllare che alcuni input siano maggiori di un certo valore*/
+	floable num;
+	while(1){
+		scanf("%lf", &num);
+		if (num>=a){
+			return num;
+		}
+		else{
+			printf("Insert a number >= than %f\n",a);
+		}
+	}
+}
+int main (void){
+	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
+  	int i,DIM;
+  	floable dt=0.01,t,*AmpTime,MyInput(floable);
+  	void SIGNAL(floable*,int);
+  	gsl_rng *r;					/*, unsigned long int s*/	/*definisco il seed. se non c'è s allora il seed è di default*/
+  	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
+  	T = gsl_rng_default;				/*uso il default seed*/	
+  	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
+  	FILE *AMPINTIME;				/*Ci sarà anche un AMPINFREQ*/
+  	AMPINTIME=fopen("AmpTime.dat","w");
+  	printf("Dimensione vettore dei campioni: ");
+  	DIM=1*MyInput(1);
+  	AmpTime=(floable*)malloc(sizeof(floable)*DIM);	/*Usiamo un puntatore invece di un array, in questo modo sfruttiamo l'allocazione dinamica*/
+  	SIGNAL(AmpTime,DIM);
+  	for (i = 0; i < DIM; i++){	
+  		t=T0+i*dt;
+    		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */
+							/* double v = gsl_ran_gaussian (r,a);	uso il generatore di random gaussiano doppia precisione, con errore a */  
+		printf ("Gaussian %f	Signal %f	Signal+Noise %f \n",v,AmpTime[i],AmpTime[i]+v);
+		fprintf(AMPINTIME, " %.5f %.5f\n",t,AmpTime[i]+v); 	/*Segnale, Sin, Errore*/
+	}	
+	gsl_rng_free (r);				/*libero lo spazio di memoria dei vettori usati*/
+	
+	
+							/*Codice per la FFT*/
+	
+	fclose(AMPINTIME);
+	free(AmpTime);
 	return 0;
 }
