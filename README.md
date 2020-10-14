@@ -17,3 +17,10 @@ Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma pi√
 *Fast Fourier Transform* : https://www.gnu.org/software/gsl/doc/html/fft.html
 
 *Random Numbers Generator* : https://www.gnu.org/software/gsl/doc/html/rng.html?highlight=random
+
+
+# La Bibbia dell'Assembly
+*Comandi in Assembly che potrebbero servirci*
+sudo apt-get install nameprog   Per installare programmi nuovi
+gcc -o file.out file.c -lgsl -lgslcblas -lm   Per compilare i file che ci servono
+./file.out    Per eseguire i file compilati
