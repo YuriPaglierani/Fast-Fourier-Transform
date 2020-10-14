@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -14,13 +16,19 @@ void SIGNAL(floable *AmpTime,int dim){		/*Qui ci andrà l'algoritmo di conversio
 
 floable MyInput(floable a){				/*Questa funzione la potremo usare per controllare che alcuni input siano maggiori di un certo valore*/
 	floable num;
+	int n;
 	while(1){
 		scanf("%lf", &num);
 		if (num>=a){
 			return num;
 		}
-		else{
+		else if(num<a){
 			printf("Insert a number >= than %f\n",a);
+		}
+		n++;
+		if (n++>100){
+			printf("Unexpected Error");
+			exit(1);
 		}
 	}
 }
