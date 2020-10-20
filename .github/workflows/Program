@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <complex.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_fft_real.h>
@@ -16,6 +17,20 @@ void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione
 	}
 }
 
+void fft_halfcomplex_unpack(floable *halfcomplex_coefficient, double complex *complex_coefficient, int stride, int n){
+	int i;
+	complex_coefficient[0] = halfcomplex_coefficient[0]+0.0*I;
+	for (i = 1; i < n - i; i++)
+  	{
+    		floable hc_real = halfcomplex_coefficient[(2 * i - 1)*stride];
+    		floable hc_imag = halfcomplex_coefficient[(2 * i)*stride];
+    		complex_coefficient[i*stride] = hc_real+hc_imag*I;
+    		complex_coefficient[(n - i)*stride] = hc_real-hc_imag*I;
+  	}
+	if (i == n - i){
+    		complex_coefficient[i*stride] = halfcomplex_coefficient[(n - 1)*stride]+0.0*I;
+  	}
+}  	
 floable MyInput(floable a){				/*Questa funzione la potremo usare per controllare che alcuni input siano maggiori di un certo valore*/
 	floable num;
 	int n;
@@ -36,49 +51,52 @@ floable MyInput(floable a){				/*Questa funzione la potremo usare per controllar
 }
 int main (void){
 	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
-  	int i,DIM;
+  	int i,DIM,stride=1;
   	floable dt=0.01,t,*Time,MyInput(floable);
-  	void SIGNAL(floable*,int);
+  	double complex *F_coeff;			/*Qui andrò a salvare la trasformata di Fourier del segnale*/
+  	void SIGNAL(floable*,int),fft_halfcomplex_unpack(floable*,double complex*,int,int);
   	gsl_rng *r;					/*definisco il seed*/
   	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
   	T = gsl_rng_default;				/*uso il default seed*/	
   	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
   	FILE *AMPINTIME;
-	FILE *AMPINFREQ;				/*Ci sarà anche un AMPINFREQ = fft(AMPINTIME)*/
-  	AMPINTIME=fopen("AmpTime.dat","w");
-	AMPINFREQ=fopen("AmpFreq.dat","w");
+	FILE *AMPINFREQ;			
+  	AMPINTIME=fopen("AmpTime.dat","w");		/*File per il vettore dei campioni nel dominio dei tempi*/
+	AMPINFREQ=fopen("AmpFreq.dat","w");		/*File per il modulo dei coefficienti di Fourier*/
   	printf("Dimensione vettore dei campioni: ");
-  	DIM=1*MyInput(1);
-  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Usiamo un puntatore invece di un array, in questo modo sfruttiamo l'allocazione dinamica*/
-  	SIGNAL(Time,DIM);
+  	DIM=1*MyInput(1);				/*Definisco la dimensione del mio segnale*/
+  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Array che uso sia per il segnale che per il cambio di base negli halfcomplex*/
+  	F_coeff=(double complex*)calloc(DIM,sizeof(double complex));
+  	SIGNAL(Time,DIM);				/*Genero un segnale pulito*/
+  	printf("In time: ");
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
-    		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */
-							  
-		printf ("Gaussian %f	Signal %f	Signal+Noise %f \n",v,Time[i],Time[i]+v);
-		fprintf(AMPINTIME, " %.5f %.5f\n",t,Time[i]+v); 	/*Segnale, Sin, Errore*/
+    		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
+    		Time[i]=Time[i]+v;				  
+		printf ("%e %e \n",t,Time[i]);
+		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	/*Segnale generato con aggiunta di rumore gaussiano*/
 	}	
-	gsl_rng_free (r);				/*libero lo spazio di memoria dei vettori usati*/
-	
+	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
 	
 	gsl_fft_real_wavetable * real;
 	gsl_fft_halfcomplex_wavetable * hc;
 	gsl_fft_real_workspace * work;
 	work = gsl_fft_real_workspace_alloc (DIM);
 	real = gsl_fft_real_wavetable_alloc (DIM);
-	gsl_fft_real_transform (Time, 1, DIM, real, work);
-
+	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Passo dalla base del tempo alla base halfcomplex*/
+	
+    	fft_halfcomplex_unpack(Time,F_coeff,stride,DIM);		/*Uso la base halfcomplex per ottenere la trasformata di Fourier su campo complesso*/
+    	for (i = 0; i < DIM; i++){
+		fprintf(AMPINFREQ, "%e\n", sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));			/*scrivo su file il modulo dei coefficienti di Fourier*/
+    	}
 	gsl_fft_real_wavetable_free (real);
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
-	gsl_fft_halfcomplex_inverse (Time, 1, DIM, hc, work);
+	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
-	for (i = 0; i < DIM; i++){
-      		printf ("%d: %e\n", i, Time[i]);
-		fprintf(AMPINFREQ, "%e\n", Time[i]);
-    	}
-	gsl_fft_real_workspace_free (work);
 	
+	gsl_fft_real_workspace_free (work);
 	fclose(AMPINTIME);
 	free(Time);
+	free(F_coeff);
 	return 0;
 }
