@@ -1,16 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_fft_real.h>
+#include <gsl/gsl_fft_halfcomplex.h>
+#include <gsl/gsl_errno.h>
 #define T0 0
-typedef double floable;				/*A cute name for a float-double choice*/
+typedef double floable;					/*A cute name for a float-double choice*/
 
-void SIGNAL(floable *AmpTime,int dim){		/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
+void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
 	int i;
 	for (i=0;i<dim;i++){
-		AmpTime[i]=10*sin(2*M_PI*i*0.01);
+		Time[i]=10*sin(2*M_PI*i*0.01);	/*segnale f(x)=A*sin(2*pi*x)*/
 	}
 }
 
@@ -35,31 +37,48 @@ floable MyInput(floable a){				/*Questa funzione la potremo usare per controllar
 int main (void){
 	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
   	int i,DIM;
-  	floable dt=0.01,t,*AmpTime,MyInput(floable);
+  	floable dt=0.01,t,*Time,MyInput(floable);
   	void SIGNAL(floable*,int);
   	gsl_rng *r;					/*definisco il seed*/
   	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
   	T = gsl_rng_default;				/*uso il default seed*/	
   	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
-  	FILE *AMPINTIME;				/*Ci sarà anche un AMPINFREQ*/
+  	FILE *AMPINTIME;
+	FILE *AMPINFREQ;				/*Ci sarà anche un AMPINFREQ = fft(AMPINTIME)*/
   	AMPINTIME=fopen("AmpTime.dat","w");
+	AMPINFREQ=fopen("AmpFreq.dat","w");
   	printf("Dimensione vettore dei campioni: ");
   	DIM=1*MyInput(1);
-  	AmpTime=(floable*)malloc(sizeof(floable)*DIM);	/*Usiamo un puntatore invece di un array, in questo modo sfruttiamo l'allocazione dinamica*/
-  	SIGNAL(AmpTime,DIM);
+  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Usiamo un puntatore invece di un array, in questo modo sfruttiamo l'allocazione dinamica*/
+  	SIGNAL(Time,DIM);
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */
 							  
-		printf ("Gaussian %f	Signal %f	Signal+Noise %f \n",v,AmpTime[i],AmpTime[i]+v);
-		fprintf(AMPINTIME, " %.5f %.5f\n",t,AmpTime[i]+v); 	/*Segnale, Sin, Errore*/
+		printf ("Gaussian %f	Signal %f	Signal+Noise %f \n",v,Time[i],Time[i]+v);
+		fprintf(AMPINTIME, " %.5f %.5f\n",t,Time[i]+v); 	/*Segnale, Sin, Errore*/
 	}	
 	gsl_rng_free (r);				/*libero lo spazio di memoria dei vettori usati*/
 	
 	
-							/*Codice per la FFT*/
+	gsl_fft_real_wavetable * real;
+	gsl_fft_halfcomplex_wavetable * hc;
+	gsl_fft_real_workspace * work;
+	work = gsl_fft_real_workspace_alloc (DIM);
+	real = gsl_fft_real_wavetable_alloc (DIM);
+	gsl_fft_real_transform (Time, 1, DIM, real, work);
+
+	gsl_fft_real_wavetable_free (real);
+	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
+	gsl_fft_halfcomplex_inverse (Time, 1, DIM, hc, work);
+  	gsl_fft_halfcomplex_wavetable_free (hc);
+	for (i = 0; i < DIM; i++){
+      		printf ("%d: %e\n", i, Time[i]);
+		fprintf(AMPINFREQ, "%e\n", Time[i]);
+    	}
+	gsl_fft_real_workspace_free (work);
 	
 	fclose(AMPINTIME);
-	free(AmpTime);
+	free(Time);
 	return 0;
 }
