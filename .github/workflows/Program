@@ -8,7 +8,7 @@
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define NI 2.01
+#define NI 2.1
 typedef double floable;					/*A cute name for a float-double choice*/
 
 void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
@@ -18,20 +18,48 @@ void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione
 	}
 }
 
-void fft_halfcomplex_unpack(floable *halfcomplex_coefficient, double complex *complex_coefficient, int stride, int n){
+/*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
+complex[0].imag  =  0
+complex[1].real  =  halfcomplex[1]
+complex[1].imag  =  halfcomplex[2]
+complex[2].real  =  halfcomplex[3]
+complex[2].imag  =  halfcomplex[4]
+complex[3].real  =  halfcomplex[3]
+complex[3].imag  = -halfcomplex[4]
+complex[4].real  =  halfcomplex[1]
+complex[4].imag  = -halfcomplex[2]*/
+
+/*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM pari (DIM=6)
+complex[0].imag  =  0
+complex[1].real  =  halfcomplex[1]
+complex[1].imag  =  halfcomplex[2]
+complex[2].real  =  halfcomplex[3]
+complex[2].imag  =  halfcomplex[4]
+complex[3].real  =  halfcomplex[5]
+complex[3].imag  =  0
+complex[4].real  =  halfcomplex[3]
+complex[4].imag  = -halfcomplex[4]
+complex[5].real  =  halfcomplex[1]
+complex[5].imag  = -halfcomplex[2]*/
+
+floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*funzione per calcolare il modulo dell'iesimo coefficiente di Fourier*/
 	int i;
-	complex_coefficient[0] = halfcomplex_coefficient[0]+0.0*I;
-	for (i = 1; i < n - i; i++)
-  	{
-    		floable hc_real = halfcomplex_coefficient[(2 * i - 1)*stride];
-    		floable hc_imag = halfcomplex_coefficient[(2 * i)*stride];
-    		complex_coefficient[i*stride] = hc_real+hc_imag*I;
-    		complex_coefficient[(n - i)*stride] = hc_real-hc_imag*I;
+	floable mod;
+	if(ind<=(n+1)/2 && ind!=0){
+    		mod = sqrt(halfcomplex_coefficient[(2 * ind - 1)*stride]*halfcomplex_coefficient[(2 * ind - 1)*stride]+halfcomplex_coefficient[(2 * ind)*stride]*halfcomplex_coefficient[(2 * ind)*stride]);
   	}
-	if (i == n - i){
-    		complex_coefficient[i*stride] = halfcomplex_coefficient[(n - 1)*stride]+0.0*I;
+	else if(ind>(n+1)/2){
+  		mod = sqrt(halfcomplex_coefficient[(2 * (n-ind) - 1)*stride]*halfcomplex_coefficient[(2 * (n-ind) - 1)*stride]+halfcomplex_coefficient[(2 *(n- ind))*stride]*halfcomplex_coefficient[(2 * (n-ind))*stride]);
   	}
-}  	
+	else if (ind == n - ind){
+    		mod = abs(halfcomplex_coefficient[(n - 1)*stride]);
+    	}
+    	else if(ind==0){
+    		mod = abs(halfcomplex_coefficient[0]);
+    	}	
+  	return mod;
+}
+
 floable MyInput(floable a){				/*Questa funzione la potremo usare per controllare che alcuni input siano maggiori di un certo valore*/
 	floable num;
 	int n;
@@ -44,7 +72,7 @@ floable MyInput(floable a){				/*Questa funzione la potremo usare per controllar
 			printf("Insert a number >= than %f\n",a);
 		}
 		n++;
-		if (n++>100){
+		if (n>100){
 			printf("Unexpected Error");
 			exit(1);
 		}
@@ -53,7 +81,7 @@ floable MyInput(floable a){				/*Questa funzione la potremo usare per controllar
 int main (void){
 	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
   	int i,DIM,stride=1;
-  	floable dt=0.01,t,*Time,MyInput(floable);
+  	floable dt=0.01,t,*Time,MyInput(floable),fft_module_pack(floable*,int,int,int);
   	double complex *F_coeff;			/*Qui andrò a salvare la trasformata di Fourier del segnale*/
   	void SIGNAL(floable*,int),fft_halfcomplex_unpack(floable*,double complex*,int,int);
   	gsl_rng *r;					/*definisco il seed*/
@@ -69,7 +97,6 @@ int main (void){
   	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Array che uso sia per il segnale che per il cambio di base negli halfcomplex*/
   	F_coeff=(double complex*)calloc(DIM,sizeof(double complex));
   	SIGNAL(Time,DIM);				/*Genero un segnale pulito*/
-  	printf("In time: ");
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
@@ -85,10 +112,9 @@ int main (void){
 	real = gsl_fft_real_wavetable_alloc (DIM);
 	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Passo dalla base del tempo alla base halfcomplex*/
 	
-    	fft_halfcomplex_unpack(Time,F_coeff,stride,DIM);		/*Uso la base halfcomplex per ottenere la trasformata di Fourier su campo complesso*/
     	for (i = 0; i < DIM; i++){
-    		printf ("%.5e %e \n",1.0*i/(DIM*dt), sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));
-		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*i/(DIM*dt), sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));			/*scrivo su file il modulo dei coefficienti di Fourier*/
+    		printf ("%.5e %e \n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));
+		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			/*scrivo su file il modulo dei coefficienti di Fourier*/
     	}
 	gsl_fft_real_wavetable_free (real);
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
