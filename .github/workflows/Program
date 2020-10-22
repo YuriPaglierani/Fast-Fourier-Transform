@@ -73,7 +73,7 @@ int main (void){
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
-    		Time[i]=Time[i]+v/10;				  
+    		Time[i]=Time[i]+v;				  
 		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	/*Segnale generato con aggiunta di rumore gaussiano*/
 	}	
 	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
