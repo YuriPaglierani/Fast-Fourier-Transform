@@ -8,12 +8,13 @@
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
+#define NI 2.01
 typedef double floable;					/*A cute name for a float-double choice*/
 
 void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
 	int i;
 	for (i=0;i<dim;i++){
-		Time[i]=10*sin(2*M_PI*i*0.01);	/*segnale f(x)=A*sin(2*pi*x)*/
+		Time[i]=10*sin(2*M_PI*i*0.01*NI);	/*segnale f(x)=A*sin(2*pi*x)*/
 	}
 }
 
@@ -72,8 +73,7 @@ int main (void){
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
-    		Time[i]=Time[i]+v;				  
-		printf ("%e %e \n",t,Time[i]);
+    		Time[i]=Time[i]+v/10;				  
 		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	/*Segnale generato con aggiunta di rumore gaussiano*/
 	}	
 	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
@@ -87,7 +87,8 @@ int main (void){
 	
     	fft_halfcomplex_unpack(Time,F_coeff,stride,DIM);		/*Uso la base halfcomplex per ottenere la trasformata di Fourier su campo complesso*/
     	for (i = 0; i < DIM; i++){
-		fprintf(AMPINFREQ, "%e\n", sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));			/*scrivo su file il modulo dei coefficienti di Fourier*/
+    		printf ("%.5e %e \n",1.0*i/(DIM*dt), sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));
+		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*i/(DIM*dt), sqrt(creal(F_coeff[i])*creal(F_coeff[i])+cimag(F_coeff[i])*cimag(F_coeff[i])));			/*scrivo su file il modulo dei coefficienti di Fourier*/
     	}
 	gsl_fft_real_wavetable_free (real);
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
