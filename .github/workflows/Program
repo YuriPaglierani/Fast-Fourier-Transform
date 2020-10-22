@@ -8,15 +8,8 @@
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define NI 2.1
-typedef double floable;					/*A cute name for a float-double choice*/
-
-void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
-	int i;
-	for (i=0;i<dim;i++){
-		Time[i]=10*sin(2*M_PI*i*0.01*NI);	/*segnale f(x)=A*sin(2*pi*x)*/
-	}
-}
+#define NI 22.1
+#define dt 0.001
 
 /*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
 complex[0].imag  =  0
@@ -41,6 +34,19 @@ complex[4].real  =  halfcomplex[3]
 complex[4].imag  = -halfcomplex[4]
 complex[5].real  =  halfcomplex[1]
 complex[5].imag  = -halfcomplex[2]*/
+
+typedef double floable;					/*A cute name for a float-double choice*/
+
+void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
+	int i;
+	for (i=0;i<dim;i++){
+		Time[i]=10*sin(2*M_PI*i*dt*NI);	/*segnale f(x)=A*sin(2*pi*x)*/
+	}
+}
+
+void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){
+
+}
 
 floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*funzione per calcolare il modulo dell'iesimo coefficiente di Fourier*/
 	int i;
@@ -78,24 +84,27 @@ floable MyInput(floable a){				/*Questa funzione la potremo usare per controllar
 		}
 	}
 }
+
 int main (void){
 	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
-  	int i,DIM,stride=1;
-  	floable dt=0.01,t,*Time,MyInput(floable),fft_module_pack(floable*,int,int,int);
-  	double complex *F_coeff;			/*Qui andrò a salvare la trasformata di Fourier del segnale*/
-  	void SIGNAL(floable*,int),fft_halfcomplex_unpack(floable*,double complex*,int,int);
+  	int i, DIM, stride=1;
+  	floable t, *Time, MyInput(floable), fft_module_pack(floable*,int,int,int);
+  	void SIGNAL(floable*,int), fft_halfcomplex_unpack(floable*,double complex*,int,int), fft_halfcomplex_filter(floable*,int,int);
   	gsl_rng *r;					/*definisco il seed*/
   	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
   	T = gsl_rng_default;				/*uso il default seed*/	
   	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
   	FILE *AMPINTIME;
-	FILE *AMPINFREQ;			
+	FILE *AMPINFREQ;
+	FILE *FILTERED_FFT;
+	FILE *FILTERED_SIGNAL;			
   	AMPINTIME=fopen("AmpTime.dat","w");		/*File per il vettore dei campioni nel dominio dei tempi*/
 	AMPINFREQ=fopen("AmpFreq.dat","w");		/*File per il modulo dei coefficienti di Fourier*/
+	FILTERED_FFT=fopen("Filtered_fft.dat","w");	/*File per lo spettro filtrato*/
+	FILTERED_SIGNAL=fopen("Filtered_signal.dat","w");	/*File per il segnale filtrato*/
   	printf("Dimensione vettore dei campioni: ");
   	DIM=1*MyInput(1);				/*Definisco la dimensione del mio segnale*/
   	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Array che uso sia per il segnale che per il cambio di base negli halfcomplex*/
-  	F_coeff=(double complex*)calloc(DIM,sizeof(double complex));
   	SIGNAL(Time,DIM);				/*Genero un segnale pulito*/
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
@@ -113,10 +122,12 @@ int main (void){
 	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Passo dalla base del tempo alla base halfcomplex*/
 	
     	for (i = 0; i < DIM; i++){
-    		printf ("%.5e %e \n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));
 		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			/*scrivo su file il modulo dei coefficienti di Fourier*/
     	}
 	gsl_fft_real_wavetable_free (real);
+	
+	fft_halfcomplex_filter(Time,stride,DIM);						/*Funzione per filtrare il segnale*/
+	
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
 	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
@@ -124,6 +135,5 @@ int main (void){
 	gsl_fft_real_workspace_free (work);
 	fclose(AMPINTIME);
 	free(Time);
-	free(F_coeff);
 	return 0;
 }
