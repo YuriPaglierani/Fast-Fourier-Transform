@@ -6,9 +6,13 @@ Dobbiamo poi decidere come procedere, i punti fondamentali che secondo me bisogn
 Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma più facile).
 
 Mancano:
+
 -segnale da mp3 a dati
+
 -plot: segnale + trasformata di Fourier
+
 -filtraggi vari
+
 -breve power point esplicativo
 
 
