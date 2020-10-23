@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <complex.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_fft_real.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define NI 22.1
+#define NI 220.1
 #define dt 0.001
 
 /*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
@@ -37,10 +36,28 @@ complex[5].imag  = -halfcomplex[2]*/
 
 typedef double floable;					/*A cute name for a float-double choice*/
 
+void gnuplot() {
+	int n;
+	FILE *gnu;
+    	gnu = popen(" gnuplot ", "w");
+
+    	fprintf(gnu, "plot \'/home/yuri/Scrivania/FFT/AmpFreq.dat\' with linespoints \n ");
+
+    	fflush(gnu); // I'm not sure how or if this will help, I thought it was related
+	while (1){
+		printf("Premi 0 per chiudere Gnuplot: ");
+		scanf("%d",&n);
+		if (n==0){
+    			pclose(gnu);
+    			break;
+    		}
+    	}
+}
+
 void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
 	int i;
 	for (i=0;i<dim;i++){
-		Time[i]=10*sin(2*M_PI*i*dt*NI);	/*segnale f(x)=A*sin(2*pi*x)*/
+		Time[i]=10*sin(2*M_PI*i*dt*NI)*exp(-0.001*i);	/*segnale f(x)=A*sin(2*pi*x)*/
 	}
 }
 
@@ -89,7 +106,7 @@ int main (void){
 	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
   	int i, DIM, stride=1;
   	floable t, *Time, MyInput(floable), fft_module_pack(floable*,int,int,int);
-  	void SIGNAL(floable*,int), fft_halfcomplex_unpack(floable*,double complex*,int,int), fft_halfcomplex_filter(floable*,int,int);
+  	void SIGNAL(floable*,int), fft_halfcomplex_filter(floable*,int,int),gnuplot();
   	gsl_rng *r;					/*definisco il seed*/
   	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
   	T = gsl_rng_default;				/*uso il default seed*/	
@@ -131,9 +148,16 @@ int main (void){
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
 	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
-	
+	/*asm volatile (
+		"gnuplot\n\t"
+		"plot  'AmpFreq.dat' w l"
+	);*/
+	gnuplot();
 	gsl_fft_real_workspace_free (work);
 	fclose(AMPINTIME);
+	fclose(AMPINFREQ);
+	fclose(FILTERED_FFT);
+	fclose(FILTERED_SIGNAL);
 	free(Time);
 	return 0;
 }
