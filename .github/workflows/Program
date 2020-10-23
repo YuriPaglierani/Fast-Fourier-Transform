@@ -148,11 +148,9 @@ int main (void){
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
 	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
-	/*asm volatile (
-		"gnuplot\n\t"
-		"plot  'AmpFreq.dat' w l"
-	);*/
+	
 	gnuplot();
+	
 	gsl_fft_real_workspace_free (work);
 	fclose(AMPINTIME);
 	fclose(AMPINFREQ);
