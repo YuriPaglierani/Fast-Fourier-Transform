@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_fft_real.h>
@@ -58,10 +59,15 @@ void gnuplot() {
 }
 
 void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
-	int i;
-	for (i=0;i<dim;i++){
-		Time[i]=10*sin(2*M_PI*i*dt*NI);	/*segnale f(x)=A*sin(2*pi*x)*/
-	}
+    	int n;       
+    	int16_t buf[dim];       
+    	FILE *pipein;
+    	pipein = popen("ffmpeg -i Fun_Some_Nights.mp3 -f f32be -ac 1 -", "r");
+    	fread(buf, 2, dim, pipein);
+    	pclose(pipein);
+    	for(n=0;n<dim;n++){
+    		Time[n]=1.0*buf[n];
+    	}
 }
 
 void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){
