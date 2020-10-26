@@ -6,7 +6,7 @@ Core points of the program:
 
 - Converting a general Audiofile.ext to Number_file.dat
 
-- Saving Number_file.dat (1° column times, 2° column Amplitude)
+- Adding a gaussian noise and saving Number_file.dat (1° column times, 2° column Amplitude)
 
 - FFT of the real input signal (in halfcomplex representation)
 
@@ -23,9 +23,9 @@ Mancano:
 -breve power point esplicativo
 
 
-# Indirizzi utili
+# Useful Adresses
 
-*Note generali sul C/C++* : https://www.cplusplus.com/
+*General notes on C/C++* : https://www.cplusplus.com/
 
 *GSL-GNU Scientific Library* : https://www.gnu.org/software/gsl/
 
