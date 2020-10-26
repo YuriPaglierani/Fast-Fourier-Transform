@@ -40,5 +40,7 @@ Mancano:
 
 sudo apt-get install ffmpeg (To install ffmpeg)
 
+sudo apt-get install Gnuplot (To install Gnuplot)
+
 gcc -o file.out file.c -lgsl -lgslcblas -lm   (For compiling)
 
