@@ -120,29 +120,29 @@ floable MyInput(floable a){				/*takes the dimension of the sample vector*/
 }
 
 int main (void){
-	const gsl_rng_type *T;				/*inizializzazione. Creo un generatore che devo settare su un seed*/ 		
+	const gsl_rng_type *T;				/*inizialization. Generator of the seed*/ 		
   	int i, DIM, stride=1;
   	floable t, *Time, MyInput(floable), fft_module_pack(floable*,int,int,int);
   	void SIGNAL(floable*,int), fft_halfcomplex_filter(floable*,int,int),gnuplot();
-  	gsl_rng *r;					/*definisco il seed*/
-  	gsl_rng_env_setup();				/*funzione che uso per definire il seed*/
-  	T = gsl_rng_default;				/*uso il default seed*/	
-  	r = gsl_rng_alloc (T);				/*faccio in modo che le info sul vettore T siano immagazzinate nel blocco di memoria di r*/
+  	gsl_rng *r;					/*seed*/
+  	gsl_rng_env_setup();				/*function for the definition of the seed*/
+  	T = gsl_rng_default;				/*using the default seed*/	
+  	r = gsl_rng_alloc (T);				/*storing the information of T on the memory r*/
   	printf("Dimensione vettore dei campioni: ");
-  	DIM=1*MyInput(1);				/*Definisco la dimensione del mio segnale*/
-  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*Array che uso sia per il segnale che per il cambio di base negli halfcomplex*/
+  	DIM=1*MyInput(1);				/*Dimension of the signal*/
+  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*We'll use this vector first to store the signal in time domain and then the signal in frequency domain*/
   	SIGNAL(Time,DIM);				/*Genero un segnale pulito da un file*/
   	
   	FILE *AMPINTIME;				
-  	AMPINTIME=fopen("AmpTime.dat","w");		/*File per il vettore dei campioni nel dominio dei tempi*/
+  	AMPINTIME=fopen("AmpTime.dat","w");		/*File for the signal in the time domain*/
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
-    		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
-    		Time[i]=Time[i]+2000*v;			/*Segnale generato con aggiunta di rumore gaussiano*/	  
+    		floable v = gsl_ran_ugaussian (r);		/*double precision gaussian random number generator*/	
+    		Time[i]=Time[i]+2000*v;			/*Signal+gaussian noise*/	  
 		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	
 	}	
 	fclose(AMPINTIME);
-	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
+	gsl_rng_free (r);					/*Deallocation of memory*/
 	
 	gsl_fft_real_wavetable * real;
 	gsl_fft_halfcomplex_wavetable * hc;
