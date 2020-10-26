@@ -1,17 +1,24 @@
 # Fast-Fourier-Transform
-Prima di iniziare a programmare leggi velocemente la guida di Github sulle repository, in questo modo miglioreremo l'amministrazione del lavoro.
 
-Dobbiamo poi decidere come procedere, i punti fondamentali che secondo me bisogna tenere in considerazione sono: leggere il libro del C, capire quali librerie utilizzare, capire esattamente come funziona l'algoritmo di FFT nei suoi vari punti e infine dividere il lavoro tra generazione del segnale in input (segnale pulito + rumore gaussiano) e algoritmo di FFT.
+Core points of the program:
 
-Nota: Github usa il Markdown come linguaggio di formattazione (tipo Latex ma più facile).
+- Random numbers generator (Gaussian);
+
+- Converting a general Audiofile.ext to Number_file.dat
+
+- Saving Number_file.dat (1° column times, 2° column Amplitude)
+
+- FFT of the real input signal (in halfcomplex representation)
+
+- Saving a file with frequencies (1° column) and the modules of Fourier coefficients (2° column)
+
+- Filtering the halfcomplex signal
+
+- Saving the results in 2 files (1 for frequency domain and 1 for time domain)
+
+- Plots of the 4 files
 
 Mancano:
-
--segnale da mp3 a dati
-
--plot: segnale + trasformata di Fourier
-
--filtraggi vari
 
 -breve power point esplicativo
 
@@ -29,11 +36,9 @@ Mancano:
 *Random Numbers Generator* : https://www.gnu.org/software/gsl/doc/html/rng.html?highlight=random
 
 
-# La Bibbia dell'Assembly
-*Comandi in Assembly che potrebbero servirci*
+# Assembly
 
-sudo apt-get install nameprog   Per installare programmi nuovi
+sudo apt-get install ffmpeg (To install ffmpeg)
 
-gcc -o file.out file.c -lgsl -lgslcblas -lm   Per compilare i file che ci servono
+gcc -o file.out file.c -lgsl -lgslcblas -lm   (For compiling)
 
-./file.out    Per eseguire i file compilati
