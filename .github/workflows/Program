@@ -8,7 +8,7 @@
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define dt 1.0/48000.0
+#define dt 1.0/48000.0				/*Frequenza di campionamento degli audio aac usati*/
 
 /*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
 complex[0].imag  =  0
@@ -39,13 +39,16 @@ typedef double floable;					/*A cute name for a float-double choice*/
 void gnuplot() {
 	int n;
 	FILE *gnu;
-    	gnu = popen(" gnuplot ", "w");			/*Serve per aprire un programma*/
+    	gnu = popen(" gnuplot ", "w");			/*Serve per aprire gnuplot*/
 
-	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Freq' \n set xlabel 'Fourier'  \nset grid \n set terminal x11\n");	/*Setto le impostazioni per i grafici*/
+	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11\n");	/*Setto le impostazioni per i grafici*/
     	fprintf(gnu, " plot \'AmpFreq.dat\' with lines \n ");
-    	fprintf(gnu, "set title 'Segnale' \n set ylabel 'Time' \n set xlabel 'Fourier' \nset grid \n set terminal x11 1#1\n");
+    	fprintf(gnu, "set title 'Segnale' \n set ylabel 'Ampiezza' \n set xlabel 'Time' \nset grid \n set terminal x11 1#1\n");
 	fprintf(gnu, "plot \'AmpTime.dat\' with lines \n ");
-
+	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier filtrati' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11 2#2\n");	/*Setto le impostazioni per i grafici*/
+    	fprintf(gnu, " plot \'Filtered_fft.dat\' with lines \n ");
+    	fprintf(gnu, "set title 'Segnale Filtrato' \n set ylabel 'Ampiezza' \n set xlabel 'Time'  \nset grid \n set terminal x11 3#3\n");	/*Setto le impostazioni per i grafici*/
+    	fprintf(gnu, " plot \'Filtered_signal.dat\' with lines \n ");
     	fflush(gnu);
 	while (1){
 		printf("Premi 0 per chiudere Gnuplot: ");
@@ -57,7 +60,7 @@ void gnuplot() {
     	}
 }
 
-void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione mp3-numerico*/
+void SIGNAL(floable *Time,int dim){			/*Algoritmo di conversione aac-numerico*/
     	int n;       
     	int16_t buf[dim];       
     	FILE *pipein;
@@ -69,8 +72,11 @@ void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione
     	}
 }
 
-void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){
-
+void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){ /*Funzione di filtro per lo spettro del segnalr*/
+	int i;
+	for (i=0;i<n;i++){
+		halfcomplex_coefficient[i]/=pow(1.0001,0.5*i);
+	}
 }
 
 floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*funzione per calcolare il modulo dell'iesimo coefficiente di Fourier*/
@@ -134,11 +140,8 @@ int main (void){
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
-    		Time[i]=Time[i]+2000*v;				  
-		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	/*Segnale generato con aggiunta di rumore gaussiano*/
-		if (i==9999){
-			printf("Ciao");
-		}
+    		Time[i]=Time[i]+2000*v;			/*Segnale generato con aggiunta di rumore gaussiano*/	  
+		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	
 	}	
 	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
 	
@@ -155,11 +158,15 @@ int main (void){
 	gsl_fft_real_wavetable_free (real);
 	
 	fft_halfcomplex_filter(Time,stride,DIM);						/*Funzione per filtrare il segnale*/
-	
+	for (i = 0; i < DIM; i++){
+		fprintf(FILTERED_FFT, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			/*scrivo su file il modulo dei coefficienti di Fourier filtrati*/
+    	}	
 	hc = gsl_fft_halfcomplex_wavetable_alloc (DIM);
 	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
-  
+  	for (i = 0; i < DIM; i++){
+		fprintf(FILTERED_SIGNAL, "%.5e %.5e\n",T0+i*dt, Time[i]);			/*scrivo su file il modulo dei coefficienti di Fourier filtrati*/
+    	}
 	gnuplot();						/*Plot dei files*/
 	
 	gsl_fft_real_workspace_free (work);
