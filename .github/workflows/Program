@@ -8,7 +8,7 @@
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define dt 0.001
+#define dt 1.0/48000.0
 
 /*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
 complex[0].imag  =  0
@@ -42,9 +42,9 @@ void gnuplot() {
     	gnu = popen(" gnuplot ", "w");			/*Serve per aprire un programma*/
 
 	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Freq' \n set xlabel 'Fourier'  \nset grid \n set terminal x11\n");	/*Setto le impostazioni per i grafici*/
-    	fprintf(gnu, " plot \'AmpFreq.dat\' with linespoints \n ");
+    	fprintf(gnu, " plot \'AmpFreq.dat\' with lines \n ");
     	fprintf(gnu, "set title 'Segnale' \n set ylabel 'Time' \n set xlabel 'Fourier' \nset grid \n set terminal x11 1#1\n");
-	fprintf(gnu, "plot \'AmpTime.dat\' with linespoints \n ");
+	fprintf(gnu, "plot \'AmpTime.dat\' with lines \n ");
 
     	fflush(gnu);
 	while (1){
@@ -61,8 +61,8 @@ void SIGNAL(floable *Time,int dim){			/*Qui ci andrà l'algoritmo di conversione
     	int n;       
     	int16_t buf[dim];       
     	FILE *pipein;
-    	pipein = popen("ffmpeg -i Sol.wav -f f16le -ac 1 -", "r");
-    	fread(buf, 2, dim, pipein);
+    	pipein = popen("ffmpeg -i 1000hz.aac -f s16le -ac 1 -", "r");
+    	fread(buf, 4, dim, pipein);
     	pclose(pipein);
     	for(n=0;n<dim;n++){
     		Time[n]=1.0*buf[n];
@@ -134,8 +134,11 @@ int main (void){
   	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*uso il generatore di numeri random normale standard doppia precisione */	
-    		Time[i]=Time[i]+100*v;				  
+    		Time[i]=Time[i];				  
 		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	/*Segnale generato con aggiunta di rumore gaussiano*/
+		if (i==9999){
+			printf("Ciao");
+		}
 	}	
 	gsl_rng_free (r);					/*libero lo spazio di memoria dei vettori usati*/
 	
