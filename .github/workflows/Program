@@ -32,22 +32,22 @@ complex[5].imag  = -halfcomplex[2]*/
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define dt 1.0/48000.0				/*Frequenza di campionamento degli audio aac usati*/
+#define dt 1.0/48000.0				/*Frequency sampling of the audio file*/
 
 typedef double floable;					/*A cute name for a float-double choice*/
 
 void gnuplot() {
 	int n;
 	FILE *gnu;
-    	gnu = popen(" gnuplot ", "w");			/*Serve per aprire gnuplot*/
+    	gnu = popen(" gnuplot ", "w");			/*Open gnuplot*/
 
-	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11\n");	/*Setto le impostazioni per i grafici*/
+	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11\n");	/*Plot setting*/
     	fprintf(gnu, " plot \'AmpFreq.dat\' with lines \n ");
     	fprintf(gnu, "set title 'Segnale' \n set ylabel 'Ampiezza' \n set xlabel 'Time' \nset grid \n set terminal x11 1#1\n");
 	fprintf(gnu, "plot \'AmpTime.dat\' with lines \n ");
-	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier filtrati' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11 2#2\n");	/*Setto le impostazioni per i grafici*/
+	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier filtrati' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11 2#2\n");
     	fprintf(gnu, " plot \'Filtered_fft.dat\' with lines \n ");
-    	fprintf(gnu, "set title 'Segnale Filtrato' \n set ylabel 'Ampiezza' \n set xlabel 'Time'  \nset grid \n set terminal x11 3#3\n");	/*Setto le impostazioni per i grafici*/
+    	fprintf(gnu, "set title 'Segnale Filtrato' \n set ylabel 'Ampiezza' \n set xlabel 'Time'  \nset grid \n set terminal x11 3#3\n");
     	fprintf(gnu, " plot \'Filtered_signal.dat\' with lines \n ");
     	fflush(gnu);
 	while (1){
@@ -60,7 +60,7 @@ void gnuplot() {
     	}
 }
 
-void SIGNAL(floable *Time,int dim){			/*Algoritmo di conversione aac-numerico*/
+void SIGNAL(floable *Time,int dim){			/*COnversion algorithm (aac-numeric)*/
     	int n;       
     	int16_t buf[dim];  
     	for(n=0;n<dim;n++){
@@ -75,14 +75,14 @@ void SIGNAL(floable *Time,int dim){			/*Algoritmo di conversione aac-numerico*/
     	}
 }
 
-void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){ /*Funzione di filtro per lo spettro del segnalr*/
+void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){ /*Filter function in frequency domain*/
 	int i;
 	for (i=0;i<n;i++){
 		halfcomplex_coefficient[i]/=pow(1.0001,0.5*i);
 	}
 }
 
-floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*funzione per calcolare il modulo dell'iesimo coefficiente di Fourier*/
+floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*Function for the module of the i-th Fourier coefficient*/
 	int i;
 	floable mod;
 	if(ind<=(n+1)/2 && ind!=0){
@@ -100,7 +100,7 @@ floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, i
   	return mod;
 }
 
-floable MyInput(floable a){				/*Questa funzione la potremo usare per controllare che alcuni input siano maggiori di un certo valore*/
+floable MyInput(floable a){				/*takes the dimension of the sample vector*/
 	floable num;
 	int n;
 	while(1){
@@ -149,20 +149,20 @@ int main (void){
 	gsl_fft_real_workspace * work;
 	work = gsl_fft_real_workspace_alloc (DIM);
 	real = gsl_fft_real_wavetable_alloc (DIM);
-	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Passo dalla base del tempo alla base halfcomplex*/
+	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Time domain to frequency domain with FFT real*/
 	FILE *AMPINFREQ;
-	AMPINFREQ=fopen("AmpFreq.dat","w");		/*File per il modulo dei coefficienti di Fourier*/
+	AMPINFREQ=fopen("AmpFreq.dat","w");		/*File for the Fourier's coefficients module*/
     	for (i = 0; i < DIM; i++){
-		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			/*scrivo su file il modulo dei coefficienti di Fourier*/
+		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));		
     	}
     	fclose(AMPINFREQ);
 	gsl_fft_real_wavetable_free (real);
 	
 	fft_halfcomplex_filter(Time,stride,DIM);						/*Funzione per filtrare il segnale*/
 	FILE *FILTERED_FFT;
-	FILTERED_FFT=fopen("Filtered_fft.dat","w");	/*File per lo spettro filtrato*/
+	FILTERED_FFT=fopen("Filtered_fft.dat","w");	/*File for the filtered spectrum*/
 	for (i = 0; i < DIM; i++){
-		fprintf(FILTERED_FFT, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			/*scrivo su file il modulo dei coefficienti di Fourier filtrati*/
+		fprintf(FILTERED_FFT, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			
     	}	
     	fclose(FILTERED_FFT);
     	
@@ -171,13 +171,13 @@ int main (void){
   	gsl_fft_halfcomplex_wavetable_free (hc);
   	gsl_fft_real_workspace_free (work);
   	FILE *FILTERED_SIGNAL;		
-	FILTERED_SIGNAL=fopen("Filtered_signal.dat","w");	/*File per il segnale filtrato*/
+	FILTERED_SIGNAL=fopen("Filtered_signal.dat","w");	/*File for the filtered signal*/
   	for (i = 0; i < DIM; i++){
-		fprintf(FILTERED_SIGNAL, "%.5e %.5e\n",T0+i*dt, Time[i]);			/*scrivo su file il modulo dei coefficienti di Fourier filtrati*/
+		fprintf(FILTERED_SIGNAL, "%.5e %.5e\n",T0+i*dt, Time[i]);		
     	}
     	free(Time);
     	fclose(FILTERED_SIGNAL);
     	
-	gnuplot();						/*Plot dei files*/
+	gnuplot();						/*files plot*/
 	return 0;
 }
