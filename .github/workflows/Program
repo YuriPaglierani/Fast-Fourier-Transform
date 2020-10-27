@@ -1,4 +1,4 @@
-/*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM dispari (DIM=5)
+/*complex[0].real  =  halfcomplex[0]		halfcomplex Fourier coefficents odd dimension (DIM=5)
 complex[0].imag  =  0
 complex[1].real  =  halfcomplex[1]
 complex[1].imag  =  halfcomplex[2]
@@ -9,7 +9,7 @@ complex[3].imag  = -halfcomplex[4]
 complex[4].real  =  halfcomplex[1]
 complex[4].imag  = -halfcomplex[2]*/
 
-/*complex[0].real  =  halfcomplex[0]		Coefficienti di Fourier codificati in halfcomplex con DIM pari (DIM=6)
+/*complex[0].real  =  halfcomplex[0]		halfcomplex Fourier coefficents even dimension (DIM=6)
 complex[0].imag  =  0
 complex[1].real  =  halfcomplex[1]
 complex[1].imag  =  halfcomplex[2]
@@ -22,26 +22,27 @@ complex[4].imag  = -halfcomplex[4]
 complex[5].real  =  halfcomplex[1]
 complex[5].imag  = -halfcomplex[2]*/
 
+/*Implemetation of the FFT algorithm using GSL library*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include <gsl/gsl_rng.h>
+#include <gsl/gsl_rng.h>			
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_fft_real.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_errno.h>
 #define T0 0
-#define dt 1.0/48000.0				/*Frequency sampling of the audio file*/
+#define dt 1.0/48000.0						/*Frequency sampling of the audio file*/
 
-typedef double floable;					/*A cute name for a float-double choice*/
+typedef double floable;						/*new data type */
 
 void gnuplot() {
 	int n;
 	FILE *gnu;
-    	gnu = popen(" gnuplot ", "w");			/*Open gnuplot*/
+    	gnu = popen(" gnuplot ", "w");				/*popen = Open program gnuplot*/
 
-	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11\n");	/*Plot setting*/
+	fprintf(gnu, "set title 'Modulo dei coefficienti di Fourier' \n set ylabel 'Fourier' \n set xlabel 'Freq'  \nset grid \n set terminal x11\n");							/*Plot settings*/
     	fprintf(gnu, " plot \'AmpFreq.dat\' with lines \n ");
     	fprintf(gnu, "set title 'Segnale' \n set ylabel 'Ampiezza' \n set xlabel 'Time' \nset grid \n set terminal x11 1#1\n");
 	fprintf(gnu, "plot \'AmpTime.dat\' with lines \n ");
@@ -60,7 +61,8 @@ void gnuplot() {
     	}
 }
 
-void SIGNAL(floable *Time,int dim){			/*COnversion algorithm (aac-numeric)*/
+/*Conversion algorithm (aac-numeric)*/
+void SIGNAL(floable *Time,int dim){			
     	int n;       
     	int16_t buf[dim];  
     	for(n=0;n<dim;n++){
@@ -75,14 +77,16 @@ void SIGNAL(floable *Time,int dim){			/*COnversion algorithm (aac-numeric)*/
     	}
 }
 
-void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){ /*Filter function in frequency domain*/
+/*Filter function in frequency domain*/
+void fft_halfcomplex_filter(floable *halfcomplex_coefficient, int stride, int n){ 
 	int i;
 	for (i=0;i<n;i++){
 		halfcomplex_coefficient[i]/=pow(1.0001,0.5*i);
 	}
 }
 
-floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		/*Function for the module of the i-th Fourier coefficient*/
+/*Function for the module of the i-th Fourier coefficient*/
+floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, int n){		
 	int i;
 	floable mod;
 	if(ind<=(n+1)/2 && ind!=0){
@@ -100,7 +104,7 @@ floable fft_module_pack(floable *halfcomplex_coefficient, int ind, int stride, i
   	return mod;
 }
 
-floable MyInput(floable a){				/*takes the dimension of the sample vector*/
+floable MyInput(floable a){					/*takes the dimension of the sample vector*/
 	floable num;
 	int n;
 	while(1){
@@ -120,28 +124,32 @@ floable MyInput(floable a){				/*takes the dimension of the sample vector*/
 }
 
 int main (void){
-	const gsl_rng_type *T;				/*inizialization. Generator of the seed*/ 		
+
+	const gsl_rng_type *T;					/*inizialization of the random number library: generation of the seed*/ 		
   	int i, DIM, stride=1;
   	floable t, *Time, MyInput(floable), fft_module_pack(floable*,int,int,int);
   	void SIGNAL(floable*,int), fft_halfcomplex_filter(floable*,int,int),gnuplot();
-  	gsl_rng *r;					/*seed*/
-  	gsl_rng_env_setup();				/*function for the definition of the seed*/
-  	T = gsl_rng_default;				/*using the default seed*/	
-  	r = gsl_rng_alloc (T);				/*storing the information of T on the memory r*/
+  	gsl_rng *r;						/*seed*/
+  	gsl_rng_env_setup();					/*function for the definition of the seed*/
+  	T = gsl_rng_default;					/*using the default seed*/	
+  	r = gsl_rng_alloc (T);					/*storing the information of T on the memory r*/
   	printf("Dimensione vettore dei campioni: ");
-  	DIM=1*MyInput(1);				/*Dimension of the signal*/
-  	Time=(floable*)malloc(sizeof(floable)*DIM);	/*We'll use this vector first to store the signal in time domain and then the signal in frequency domain*/
-  	SIGNAL(Time,DIM);				/*Genero un segnale pulito da un file*/
+  	DIM=1*MyInput(1);					/*Dimension of the signal*/
+
+  	Time=(floable*)malloc(sizeof(floable)*DIM);		/*We'll use this vector first to store the signal in time domain and then the 									signal in frequency domain*/
+  	SIGNAL(Time,DIM);					/*Extracting of a signal from a file*/
   	
   	FILE *AMPINTIME;				
-  	AMPINTIME=fopen("AmpTime.dat","w");		/*File for the signal in the time domain*/
-  	for (i = 0; i < DIM; i++){	
+  	AMPINTIME=fopen("AmpTime.dat","w");			/*File for the signal in the time domain*/
+  	
+	for (i = 0; i < DIM; i++){	
   		t=T0+i*dt;
     		floable v = gsl_ran_ugaussian (r);		/*double precision gaussian random number generator*/	
-    		Time[i]=Time[i]+2000*v;			/*Signal+gaussian noise*/	  
+    		Time[i]=Time[i]+2000*v;				/*Signal+gaussian noise*/	  
 		fprintf(AMPINTIME, " %.5e %.5e\n",t,Time[i]); 	
 	}	
 	fclose(AMPINTIME);
+	
 	gsl_rng_free (r);					/*Deallocation of memory*/
 	
 	gsl_fft_real_wavetable * real;
@@ -150,17 +158,21 @@ int main (void){
 	work = gsl_fft_real_workspace_alloc (DIM);
 	real = gsl_fft_real_wavetable_alloc (DIM);
 	gsl_fft_real_transform (Time, stride, DIM, real, work);	/*Time domain to frequency domain with FFT real*/
+	
 	FILE *AMPINFREQ;
-	AMPINFREQ=fopen("AmpFreq.dat","w");		/*File for the Fourier's coefficients module*/
+	AMPINFREQ=fopen("AmpFreq.dat","w");			/*File for the Fourier's coefficients module*/
+
     	for (i = 0; i < DIM; i++){
 		fprintf(AMPINFREQ, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));		
     	}
     	fclose(AMPINFREQ);
 	gsl_fft_real_wavetable_free (real);
 	
-	fft_halfcomplex_filter(Time,stride,DIM);						/*Funzione per filtrare il segnale*/
+	fft_halfcomplex_filter(Time,stride,DIM);		/*Signal filter function*/
+	
 	FILE *FILTERED_FFT;
-	FILTERED_FFT=fopen("Filtered_fft.dat","w");	/*File for the filtered spectrum*/
+	FILTERED_FFT=fopen("Filtered_fft.dat","w");		/*File for the filtered spectrum*/
+
 	for (i = 0; i < DIM; i++){
 		fprintf(FILTERED_FFT, "%.5e %.5e\n",1.0*(i)/(DIM*dt), fft_module_pack(Time,i,stride,DIM));			
     	}	
@@ -170,14 +182,16 @@ int main (void){
 	gsl_fft_halfcomplex_inverse (Time, stride, DIM, hc, work);
   	gsl_fft_halfcomplex_wavetable_free (hc);
   	gsl_fft_real_workspace_free (work);
+
   	FILE *FILTERED_SIGNAL;		
 	FILTERED_SIGNAL=fopen("Filtered_signal.dat","w");	/*File for the filtered signal*/
+
   	for (i = 0; i < DIM; i++){
 		fprintf(FILTERED_SIGNAL, "%.5e %.5e\n",T0+i*dt, Time[i]);		
     	}
     	free(Time);
     	fclose(FILTERED_SIGNAL);
     	
-	gnuplot();						/*files plot*/
+	gnuplot();						/*Files plot*/
 	return 0;
 }
