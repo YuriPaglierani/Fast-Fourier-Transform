@@ -18,11 +18,6 @@ Core points of the program:
 
 - Plots of the 4 files
 
-Mancano:
-
--breve power point esplicativo
-
-
 # Useful Adresses
 
 *General notes on C/C++* : https://www.cplusplus.com/
